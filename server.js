@@ -1,15 +1,30 @@
 var express = require('express');
 var User = require('./model/user');
 var app = express();
-var bodyparser = require('body-parser');
+var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');//now I can read the cookies before just setting them.
 var mongoose = require('mongoose');
 mongoose.connect("mongodb://localhost/chatusersdb");
 
 app.use(express.static('public'));
 
-app.use(bodyparser.urlencoded({extended: true}));
-app.use(bodyparser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 
+app.use(cookieParser());
+
+app.get('/', function(req, res){
+  var user = req.cookies.user;//var user is the same user in cookies.user //this wil evaluate to what you set cookie so if just sert it will have somethingb but if logout undefine
+  if(user) {
+    res.send("Hello World," + user.username);
+  } else {
+    res.send("Hello World, Please Login");
+  }
+});
+//var user = req.cookies('user');
+// var username = user.username;
+
+//cookieParser will turn into object normally its a string. It's going to look exactly the same as the user.js
 app.get('/user', function(req, res){
   User.find(function(err, user) {
     res.send(user);
@@ -37,7 +52,15 @@ app.post('/logout', function(req, res){
   res.redirect('/');
 });
 
+
 app.listen(3000, function(){
   console.log('Ready on Port 3000');
 });
 
+
+//2pm tomorrow
+//1.Get bcrypt
+//ecrypt user password when create user and match encrypted password in login
+//you need to change the create and the login.
+//you want to delete the users in there now since not set up to encrypt users
+//I dont want password in the cookie.
