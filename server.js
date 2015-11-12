@@ -4,6 +4,7 @@ var app = express();
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');//now I can read the cookies before just setting them.
 var bcrypt = require('bcrypt-nodejs');
+var jwt = require('jsonwebtoken');
 var mongoose = require('mongoose');
 mongoose.connect("mongodb://localhost/chatdb");
 
@@ -15,10 +16,10 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 app.get('/', function(req, res){
-  var user = req.cookies.user;//var user is the same user in cookies.user //this wil evaluate to what you set cookie so if just sert it will have somethingb but if logout undefine
-  if(user) {
+  if (req.cookies.token) {
+    var user = jwt.verify(req.cookies.token, 'secret');
     res.send("Hello World," + user);
-  } else {
+  } else {//var user is the same user in cookies.user //this wil evaluate to what you set cookie so if just sert it will have somethingb but if logout undefine
     res.send("Hello World, Please Login");
   }
 });
@@ -38,15 +39,15 @@ app.get('/user', function(req, res){
 app.post('/create/user', function(req, res){
   var user = new User({username:req.body.username, password: bcrypt.hashSync(req.body.password)});
   user.save(function(err, user) {
-    res.cookie('user', user.username);
+    res.cookie('token', jwt.sign(user.username, 'secret'));
     res.redirect('/');
-    });
-});
+  });
+});//dont need username anymore since its in token.
 
 app.post('/login', function(req, res){ //you want to use get when your not chaging something..here we are changing state from logged out to login so its a post
   User.findOne({username: req.body.username}, function(err, user) {
     if(bcrypt.compareSync(req.body.password, user.password)){
-      res.cookie('user', user.username);
+      res.cookie('token', jwt.sign(user.username, 'secret'));
       res.redirect('/');
     };
   });
